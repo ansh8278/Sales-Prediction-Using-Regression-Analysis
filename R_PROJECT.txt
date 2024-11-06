@@ -1,0 +1,132 @@
+
+R version 4.4.1 (2024-06-14) -- "Race for Your Life"
+Copyright (C) 2024 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin20
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[R.app GUI 1.80 (8416) aarch64-apple-darwin20]
+
+[Workspace restored from /Users/ansh1011/.RData]
+[History restored from /Users/ansh1011/.Rapp.history]
+
+> library(shiny)
+> library(ggplot2)
+> library(dplyr)
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+> 
+> ui <- fluidPage(
++   titlePanel("Sales Prediction with Linear and Polynomial Regression"),
++   sidebarLayout(
++     sidebarPanel(
++       sliderInput("n", "Number of Samples:", 
++                   min = 10, max = 1000, value = 100),
++       actionButton("generate", "Generate Data")
++     ),
++     mainPanel(
++       plotOutput("regressionPlot"),
++       verbatimTextOutput("modelSummary"),
++       verbatimTextOutput("performanceMetrics")
++     )
++   )
++ )
+> 
+> server <- function(input, output) {
++   data <- reactiveVal(data.frame())
++   observeEvent(input$generate, {
++     set.seed(42)
++     n <- input$n
++     df <- data.frame(
++       advertising = runif(n, 1000, 5000),
++       price = runif(n, 10, 50),
++       store_size = runif(n, 100, 1000)
++     )
++     df$sales <- 3 + 0.5 * df$advertising + 2 * df$price + 
++                  0.05 * df$store_size + rnorm(n, 0, 200)
++     linear_model <- lm(sales ~ advertising + price + store_size, data = df)
++     df$predicted_sales <- predict(linear_model)
++     poly_model <- lm(sales ~ poly(advertising, 2) + price + store_size, data = df)
++     df$predicted_sales_poly <- predict(poly_model)
++     data(df)
++     output$modelSummary <- renderPrint({
++       summary(linear_model)
++     })
++     # Calculate performance metrics
++     mse <- mean((df$sales - df$predicted_sales)^2)
++     rmse <- sqrt(mse)
++     r_squared <- summary(linear_model)$r.squared
++     output$performanceMetrics <- renderPrint({
++       cat("Mean Squared Error:", mse, "\n")
++       cat("Root Mean Squared Error:", rmse, "\n")
++       cat("R-squared:", r_squared, "\n")
++     })
++   })
++   output$regressionPlot <- renderPlot({
++     req(data())
++     ggplot(data()) + 
++       geom_point(aes(x = advertising, y = sales), color = "black") + 
++       geom_line(aes(x = advertising, y = predicted_sales), color = "blue") +
++       geom_line(aes(x = advertising, y = predicted_sales_poly), color = "red") +
++       ggtitle("Model Comparison: Linear (Blue) vs Polynomial (Red)")
++   })
++ }
+> 
+> shinyApp(ui, server)
+
+Listening on http://127.0.0.1:3351
+Warning: Error in geom_point: Problem while computing aesthetics.
+ℹ Error occurred in the 1st layer.
+Caused by error:
+! object 'advertising' not found
+  196: <Anonymous>
+  195: signalCondition
+  194: signal_abort
+  193: rlang::abort
+  192: cli::cli_abort
+  191: handlers[[1L]]
+  190: h
+  189: .handleSimpleError
+  188: FUN
+  187: lapply
+  186: compute_aesthetics
+  185: l$compute_aesthetics
+  184: f
+  177: by_layer
+  176: ggplot_build.ggplot
+  174: print.ggplot
+  169: func
+  167: f
+  166: Reduce
+  157: do
+  156: hybrid_chain
+  128: drawPlot
+  114: <reactive:plotObj>
+   98: drawReactive
+   85: renderFunc
+   84: output$regressionPlot
+    3: runApp
+    2: print.shiny.appobj
+    1: <Anonymous>
+Input to asJSON(keep_vec_names=TRUE) is a named vector. In a future version of jsonlite, this option will not be supported, and named vectors will be translated into arrays instead of objects. If you want JSON object output, please use a named list instead. See ?toJSON.

@@ -1,0 +1,52 @@
+
+R version 4.4.1 (2024-06-14) -- "Race for Your Life"
+Copyright (C) 2024 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin20
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[R.app GUI 1.80 (8416) aarch64-apple-darwin20]
+
+[Workspace restored from /Users/ansh1011/.RData]
+[History restored from /Users/ansh1011/.Rapp.history]
+
+> library(ggplot2)
+library(dplyr)
+# Create synthetic dataset
+set.seed(42)
+n <- 100
+data <- data.frame(
+  advertising = runif(n, 1000, 5000),
+  price = runif(n, 10, 50),
+  store_size = runif(n, 100, 1000)
+)
+data$sales <- 3 + 0.5 * data$advertising + 2 * data$price + 0.05 * data$store_size + rnorm(n, 0, 200)
+# Linear regression model
+linear_model <- lm(sales ~ advertising + price + store_size, data = data)
+data$predicted_sales <- predict(linear_model)
+# Model evaluation
+mse <- mean((data$sales - data$predicted_sales)^2)
+cat("Mean Squared Error:", mse, "\n")
+cat("Root Mean Squared Error:", sqrt(mse), "\n")
+cat("R-squared:", summary(linear_model)$r.squared, "\n")
+# Polynomial regression model
+poly_model <- lm(sales ~ poly(advertising, 2) + price + store_size, data = data)
+data$predicted_sales_poly <- predict(poly_model)
+# Visualizations
+ggplot(data) + 
+  geom_point(aes(x = advertising, y = sales), color = "black") + 
+  geom_line(aes(x = advertising, y = predicted_sales), color = "blue") +
+  geom_line(aes(x = advertising, y = predicted_sales_poly), color = "red") +
+  ggtitle("Model Comparison: Linear (Blue) vs Polynomial (Red)")
